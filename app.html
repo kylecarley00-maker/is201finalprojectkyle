@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A single-page basketball timing game created with AI collaboration." />
+    <meta name="author" content="Kyle Carley" />
+    <title>Hot Hand Challenge | Kyle Carley</title>
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #14213d;
+            --sky: #edf2ff;
+            --card: rgba(255, 255, 255, 0.94);
+            --accent: #f97316;
+            --accent-dark: #c2410c;
+            --good: #22c55e;
+            --mid: #facc15;
+            --bad: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(249, 115, 22, 0.2), transparent 24%),
+                radial-gradient(circle at bottom right, rgba(20, 33, 61, 0.14), transparent 26%),
+                linear-gradient(180deg, #f8fafc 0%, #e8eefc 100%);
+            color: var(--ink);
+            font-family: "Trebuchet MS", Arial, sans-serif;
+        }
+
+        .app-shell {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .topbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .topbar a {
+            color: var(--ink);
+            text-decoration: none;
+            font-weight: 700;
+            padding: 0.8rem 1rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid rgba(20, 33, 61, 0.1);
+        }
+
+        .hero,
+        .game-card,
+        .tips-card {
+            background: var(--card);
+            border-radius: 28px;
+            border: 1px solid rgba(20, 33, 61, 0.08);
+            box-shadow: 0 22px 40px rgba(15, 23, 42, 0.09);
+        }
+
+        .hero {
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .eyebrow {
+            margin: 0;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--accent-dark);
+        }
+
+        h1 {
+            margin: 0.5rem 0 0.9rem;
+            font-size: clamp(2.3rem, 5vw, 4rem);
+            line-height: 0.98;
+        }
+
+        .hero p,
+        .tips-card p,
+        .game-copy {
+            line-height: 1.75;
+            color: #475569;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.3fr 0.7fr;
+            gap: 1.5rem;
+        }
+
+        .game-card,
+        .tips-card {
+            padding: 1.6rem;
+        }
+
+        .scoreboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem;
+            margin: 1.2rem 0;
+        }
+
+        .stat {
+            background: #f8fafc;
+            border-radius: 18px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid rgba(20, 33, 61, 0.07);
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #64748b;
+            margin-bottom: 0.35rem;
+        }
+
+        .stat-value {
+            font-size: 1.65rem;
+            font-weight: 800;
+        }
+
+        .meter-wrap {
+            margin: 1.3rem 0 1rem;
+            padding: 1rem;
+            border-radius: 24px;
+            background: #0f172a;
+        }
+
+        .meter-track {
+            position: relative;
+            height: 26px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: linear-gradient(90deg, var(--bad) 0%, var(--mid) 35%, var(--good) 50%, var(--mid) 65%, var(--bad) 100%);
+        }
+
+        .meter-zone {
+            position: absolute;
+            left: 43%;
+            width: 14%;
+            top: 0;
+            bottom: 0;
+            border-left: 2px solid rgba(255, 255, 255, 0.8);
+            border-right: 2px solid rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .meter-ball {
+            position: absolute;
+            top: 50%;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle at 30% 30%, #fdba74 0%, #f97316 45%, #7c2d12 100%);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            border: 0;
+            border-radius: 18px;
+            padding: 0.95rem 1.2rem;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: #fff;
+        }
+
+        .secondary {
+            background: #e2e8f0;
+            color: var(--ink);
+        }
+
+        .result {
+            min-height: 3.2rem;
+            margin-top: 1rem;
+            padding: 1rem 1.1rem;
+            border-radius: 18px;
+            background: #f8fafc;
+            border: 1px solid rgba(20, 33, 61, 0.08);
+            font-weight: 700;
+        }
+
+        .shot-log {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+
+        .chip {
+            padding: 0.45rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .chip.make {
+            background: rgba(34, 197, 94, 0.16);
+            color: #166534;
+        }
+
+        .chip.miss {
+            background: rgba(239, 68, 68, 0.14);
+            color: #991b1b;
+        }
+
+        ul {
+            padding-left: 1.15rem;
+            color: #475569;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 860px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .scoreboard {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <div class="topbar">
+            <div>
+                <p class="eyebrow">Single-Page Web App</p>
+            </div>
+            <div>
+                <a href="scratch.html">Back to Scratch Page</a>
+                <a href="index.html">Home</a>
+            </div>
+        </div>
+
+        <div class="hero">
+            <p class="eyebrow">Shot Timing Game</p>
+            <h1>Hot Hand Challenge</h1>
+            <p>
+                The idea is simple: press <strong>Shoot</strong> when the basketball lands in the green window. You get ten shots to build the best percentage you can.
+                It is small on purpose, but still feels polished, responsive, and tied to the same basketball identity as the rest of the site.
+            </p>
+        </div>
+
+        <div class="layout">
+            <div class="game-card">
+                <p class="eyebrow">Play</p>
+                <h2 style="margin: 0.4rem 0 0.7rem;">Time the release</h2>
+                <p class="game-copy">The ball moves back and forth automatically. Makes happen in the center green band, close calls are considered rushed or late, and the game ends after ten attempts.</p>
+
+                <div class="scoreboard">
+                    <div class="stat">
+                        <span class="stat-label">Shots</span>
+                        <span class="stat-value" id="shotsTaken">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Makes</span>
+                        <span class="stat-value" id="makes">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Streak</span>
+                        <span class="stat-value" id="streak">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">FG%</span>
+                        <span class="stat-value" id="fgPercent">0%</span>
+                    </div>
+                </div>
+
+                <div class="meter-wrap" aria-label="Shot timing meter">
+                    <div class="meter-track">
+                        <div class="meter-zone"></div>
+                        <div class="meter-ball" id="meterBall"></div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="primary" id="shootButton" type="button">Shoot</button>
+                    <button class="secondary" id="resetButton" type="button">Reset Game</button>
+                </div>
+
+                <div class="result" id="resultBox">Wait for the ball to reach the center green window, then fire.</div>
+                <div class="shot-log" id="shotLog" aria-live="polite"></div>
+            </div>
+
+            <div class="tips-card">
+                <p class="eyebrow">How it works</p>
+                <h2 style="margin: 0.4rem 0 0.8rem;">Clean, quick, competitive</h2>
+                <p>This app keeps everything on one page, including styles and JavaScript, which fits the assignment requirement for the AI-assisted web app.</p>
+                <ul>
+                    <li>The green center is the perfect release point.</li>
+                    <li>Yellow is close, but still a miss.</li>
+                    <li>You get ten shots per round.</li>
+                    <li>The ball speeds up slightly after every attempt.</li>
+                    <li>Reset starts a fresh run immediately.</li>
+                </ul>
+                <p>Best way to play: find a rhythm, trust the timing, and do not panic when the meter speeds up.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const meterBall = document.getElementById("meterBall");
+        const shootButton = document.getElementById("shootButton");
+        const resetButton = document.getElementById("resetButton");
+        const shotsTakenNode = document.getElementById("shotsTaken");
+        const makesNode = document.getElementById("makes");
+        const streakNode = document.getElementById("streak");
+        const fgPercentNode = document.getElementById("fgPercent");
+        const resultBox = document.getElementById("resultBox");
+        const shotLog = document.getElementById("shotLog");
+
+        let position = 8;
+        let direction = 1;
+        let speed = 0.9;
+        let shotsTaken = 0;
+        let makes = 0;
+        let streak = 0;
+        let gameOver = false;
+        let animationFrameId = null;
+
+        function updateMeter() {
+            if (gameOver) {
+                return;
+            }
+
+            position += direction * speed;
+            if (position >= 100) {
+                position = 100;
+                direction = -1;
+            }
+            if (position <= 0) {
+                position = 0;
+                direction = 1;
+            }
+
+            meterBall.style.left = position + "%";
+            animationFrameId = requestAnimationFrame(updateMeter);
+        }
+
+        function updateScoreboard() {
+            shotsTakenNode.textContent = shotsTaken;
+            makesNode.textContent = makes;
+            streakNode.textContent = streak;
+            const percentage = shotsTaken === 0 ? 0 : Math.round((makes / shotsTaken) * 100);
+            fgPercentNode.textContent = percentage + "%";
+        }
+
+        function addChip(label, className) {
+            const chip = document.createElement("span");
+            chip.className = "chip " + className;
+            chip.textContent = label;
+            shotLog.prepend(chip);
+        }
+
+        function finishGame() {
+            gameOver = true;
+            shootButton.disabled = true;
+            const percentage = shotsTaken === 0 ? 0 : Math.round((makes / shotsTaken) * 100);
+            resultBox.textContent = "Round complete. You finished " + makes + " for " + shotsTaken + " from the field, good for " + percentage + "%.";
+        }
+
+        function takeShot() {
+            if (gameOver) {
+                return;
+            }
+
+            shotsTaken += 1;
+
+            if (position >= 43 && position <= 57) {
+                makes += 1;
+                streak += 1;
+                resultBox.textContent = "Pure. That release was right in the pocket.";
+                addChip("Make " + shotsTaken, "make");
+            } else {
+                streak = 0;
+                if (position < 43) {
+                    resultBox.textContent = "Miss. You rushed it.";
+                } else {
+                    resultBox.textContent = "Miss. A little late on the release.";
+                }
+                addChip("Miss " + shotsTaken, "miss");
+            }
+
+            speed += 0.12;
+            updateScoreboard();
+
+            if (shotsTaken >= 10) {
+                finishGame();
+            }
+        }
+
+        function resetGame() {
+            position = 8;
+            direction = 1;
+            speed = 0.9;
+            shotsTaken = 0;
+            makes = 0;
+            streak = 0;
+            gameOver = false;
+            meterBall.style.left = position + "%";
+            resultBox.textContent = "Wait for the ball to reach the center green window, then fire.";
+            shotLog.innerHTML = "";
+            shootButton.disabled = false;
+            updateScoreboard();
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            animationFrameId = requestAnimationFrame(updateMeter);
+        }
+
+        shootButton.addEventListener("click", takeShot);
+        resetButton.addEventListener("click", resetGame);
+
+        updateScoreboard();
+        meterBall.style.left = position + "%";
+        animationFrameId = requestAnimationFrame(updateMeter);
+    </script>
+</body>
+</html>
